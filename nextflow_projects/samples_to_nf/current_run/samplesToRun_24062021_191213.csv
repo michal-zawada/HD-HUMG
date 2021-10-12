@@ -1,0 +1,3 @@
+order_id,read1,read2,pipeline_run_id
+P31671A,/***/fastq/P31671A_R1.fastq.gz,/***/fastq/P31671A_R2.fastq.gz,21
+R32369A,/***/fastq/R32369A_R1.fastq.gz,/***/fastq/R32369A_R2.fastq.gz,22

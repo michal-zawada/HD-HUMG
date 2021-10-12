@@ -1,0 +1,323 @@
+https://dbdiagram.io/d/5fa169313a78976d7b7a54ff
+
+Table variants { 
+variant_id bigint [pk,increment,not null, unique] 
+chrom varchar(255) //UCSC 
+pos int(10) //UCSC 
+ref_ varchar(255) //should be as "ref" 
+alt varchar(255) 
+} 
+
+Table variants_counts {
+  variant_id bigint
+  hom_inhouse int
+  het_inhouse int
+}
+//we should discuss if we need this table
+Ref: variants_counts.variant_id - variants.variant_id
+
+  
+
+Table detections { 
+  variant_id bigint  
+  pipeline_run_id int 
+  qual varchar (25)
+  filter varchar (255)
+  //better decimal where possible? () 
+  //this table will be big 
+  //we should try to reduce size 
+  ac varchar (25)  
+  af varchar (25) 
+  an varchar (25) 
+  baseqranksum varchar (25) 
+  dp varchar (25) 
+  ds varchar (255) //not found in any variant, but used by caller
+  end varchar(255) //not found in any variant, but used by caller
+  excessHet varchar(25) 
+  fs varchar(25)  
+  InbreedingCoeff varchar (255) //not found in any variant, but used by caller
+  mleac varchar(25) 
+  mleaf varchar(25) 
+  mq varchar(25) 
+  mqranksum varchar(25) 
+  n_t_s varchar(25)
+  p_t_s varchar(25)
+  qd varchar(25) 
+  readposranksum varchar(25)
+  vqslod varchar(25) 
+  culprint varchar(25) 
+  sor varchar(25) 
+  //below values are: GT:AD:DP:GQ:PL 
+  gt_g varchar(10) // _g -> genotype 
+  ad_g0 varchar(10) 
+  ad_g1 varchar(10) 
+  dp_g varchar(10) 
+  gq_g varchar(10) 
+  pl_g00 varchar (10) 
+  pl_g01 varchar (10)
+  pl_g11 varchar (10)
+} 
+
+//I'm not sure if we need all above scores
+// in the database, maybe we can exclude some
+//we need to check which are not necessary
+
+
+Table pipeline_runs {
+  pipeline_run_id int [pk]
+  sample_run_id int
+  pipeline_exec_date datetime
+  pipeline_version varchar(25)
+  status varchar (10)
+  coverage_mean varchar (10)
+  coverage_1x varchar (10)
+  coverage_5x varchar (10)
+  coverage_10x varchar (10)
+  coverage_20x varchar (10)
+  coverage_50x varchar (10)
+  coverage_70x varchar (10)
+  coverage_100x varchar (10)
+}
+
+Ref: pipeline_runs.sample_run_id > content_seq_runs.sample_run_id
+
+Ref: pipeline_runs.pipeline_run_id < detections.pipeline_run_id
+
+Table seq_runs {
+  seq_run_id int [pk] 
+  run_id varchar(255) //201008_ST-K00207_0324_AHJ7KKBBXY
+  seq_machine varchar (255) //HiSeq 4000 Paired-End 100bp
+  pe_sr varchar (10) // Paired-End , single read
+  cycles_n varchar (10)
+  seq_qual_q30 varchar (255) // 94.35%
+  lib_prep varchar (255)
+  seq_facility varchar (255)
+  submission varchar(10)
+}
+
+
+
+Table content_seq_runs {
+  sample_run_id int [pk]
+  seq_run_id int
+  order_id varchar (20) 
+  read_count varchar (20)
+  lane_ratio varchar (10)
+}
+
+Ref: seq_runs.seq_run_id < content_seq_runs.seq_run_id 
+Ref: orders.order_id < content_seq_runs.order_id
+
+Table orders { 
+  order_id varchar (20) [pk] 
+  patient_id int  
+  analysis_type varchar (25) 
+} 
+  
+
+Ref: variants.variant_id < detections.variant_id 
+
+
+
+
+Table patients { 
+  patient_id int [pk] 
+  family_id int 
+  aff_status varchar(20) //affected, unaffected, unknown 
+  dob date 
+  gender varchar (20) 
+  idx_status varchar(20) //index, mother, father,uncle  
+  //,afr, amr,nwe -> populations in gnomAD  
+} 
+
+Ref: patients.patient_id < orders.patient_id 
+
+  
+Table phenotypes {
+  patient_id int 
+  hpo_id int 
+
+} 
+
+Ref: patients.patient_id < phenotypes.patient_id 
+
+
+Table hpos { 
+  hpo_id int 
+  hpo_number varchar(20) 
+  hpo_label varchar(255) 
+}
+
+Ref: hpos.hpo_id < phenotypes.hpo_id 
+
+
+Table pheno_genes {
+  pheno_gene_id int [pk]
+  gene_entrez_id varchar (20)
+  gene_symbol varchar (20)
+}
+
+Table gene_hpo {
+  pheno_gene_id int
+  hpo_id int
+}
+
+Ref: hpos.hpo_id < gene_hpo.hpo_id
+Ref: pheno_genes.pheno_gene_id < gene_hpo.pheno_gene_id
+  
+Table classifications {
+  classification_id bigint [pk]
+  variant_id bigint
+  variant_class varchar //should be int?
+  class_datetime datetime //default now()
+  comment varchar(255)
+  person varchar(255)
+}
+
+Ref: variants.variant_id < classifications.variant_id
+
+//In "annotation" table there
+//will be different transcripts, so 
+//connectio to variants table will be 1:n
+  
+Table se_annotations {
+  se_annotation_id bigint [pk]
+  variant_id bigint
+  allele_se varchar(255)
+  annotation_se varchar(255)
+  annotation_imp_se varchar(255)
+  gene_name varchar(255)
+  gene_id varchar(255)
+  feature_type_se varchar(255)
+  feature_id_se varchar(255)
+  transcript_biotype varchar(255)
+  rank_se varchar(255)
+  hgvs_c varchar(255)
+  hgvs_p varchar(255)
+  cdna_pos varchar(255) 
+  cdna_length varchar(255)
+  cds_pos varchar(255)
+  cds_length varchar(255)
+  aa_pos varchar(255)
+  aa_length varchar(255)
+  distance varchar(255)
+  errors varchar(255)
+  se_update date
+  
+  
+}
+
+Ref: variants.variant_id < se_annotations.variant_id
+
+Table vep_annotation {
+  vep_annotation_id [pk]
+  variant_id bigint
+  allele_vep varchar(255)
+  consequence_vep varchar(255)
+  feature_type_vep varchar(255)
+  feature_vep varchar(255)
+  impact_vep varchar(255)
+  symbol_vep varchar(255)
+  vep_update date
+}
+
+Ref: variants.variant_id < vep_annotation.variant_id
+
+//in table "populations" is linked to variants
+//with 1:1 connsection, because it's independent
+//from transcripts. That's why I think 
+//it's better to split populations table 
+//and annotation table
+
+Table populations {
+  variant_id bigint
+  metasvm_pred varchar(255)
+  metalr_pred varchar(255)
+  m_cap_pred varchar(255)
+  fathmm_pred varchar(255)
+  vest4_score varchar(255)
+  aloft_pred varchar(255)
+  rs_dbsnp151 varchar(255)
+  sift_pred varchar(255)
+  mutationtaster_pred varchar(255)
+  polyphen2_hvar_pred varchar(255)
+  Polyphen2_hdiv_pred varchar(255)
+  cadd_phred varchar(255)
+  revel_score varchar(255)
+  revel_rankscore varchar(255)
+  //no digit allowed as first character
+  g1000gp3_ac varchar(255) 
+  g1000gp3_af varchar(255)
+  g1000gp3_afr_ac varchar(255)
+  g1000gp3_afr_af varchar(255)
+  g1000gp3_eur_ac varchar(255)
+  g1000gp3_eur_af varchar(255)
+  g1000gp3_amr_ac varchar(255)
+  g1000gp3_amr_af varchar(255)
+  g1000gp3_eas_ac varchar(255)
+  g1000gp3_eas_af varchar(255)
+  g1000gp3_sas_ac varchar(255)
+  g1000gp3_sas_af varchar(255)
+  twinsuk_ac varchar(255)
+  twinsuk_af varchar(255)
+  alspac_ac varchar(255)
+  alspac_af varchar(255)
+  esp6500_aa_ac varchar(255)
+  esp6500_aa_af varchar(255)
+  esp6500_ea_ac varchar(255)
+  esp6500_ea_af varchar(255)
+  exac_adj_ac varchar(255)
+  exac_adj_af varchar(255)
+  exac_afr_ac varchar(255)
+  exac_afr_af varchar(255)
+  exac_amr_ac varchar(255)
+  exac_amr_af varchar(255)
+  exac_eas_ac varchar(255)
+  exac_eas_af varchar(255)
+  exac_fin_ac varchar(255)
+  exac_fin_af varchar(255)
+  exac_nfe_ac varchar(255)
+  exac_nfe_af varchar(255)
+  exac_sas_ac varchar(255)
+  exac_sas_af varchar(255)
+  gnomad_exomes_ac varchar(255)
+  gnomad_exomes_af varchar(255)
+  gnomad_exomes_afr_ac varchar(255)
+  gnomad_exomes_afr_af varchar(255)
+  gnomad_exomes_amr_ac varchar(255)
+  gnomad_exomes_amr_af varchar(255)
+  gnomad_exomes_asj_ac varchar(255)
+  gnomad_exomes_asj_af varchar(255)
+  gnomad_exomes_eas_ac varchar(255)
+  gnomad_exomes_eas_af varchar(255)
+  gnomad_exomes_fin_ac varchar(255)
+  gnomad_exomes_fin_af varchar(255)
+  gnomad_exomes_nfe_ac varchar(255)
+  gnomad_exomes_nfe_af varchar(255)
+  gnomad_exomes_sas_ac varchar(255)
+  gnomad_exomes_sas_af varchar(255)
+  clinvar_clnsig varchar(255)
+  clinvar_var_source varchar(255)
+  clinvar_review varchar(255)
+  ensembl_geneid varchar(255)
+  ensembl_transcriptid varchar(255)
+  ensembl_proteinid varchar(255)
+  hg_pos_1_based varchar(255)
+  pop_update date
+
+  
+}
+
+Ref: variants.variant_id < populations.variant_id
+
+
+
+Table families {
+  family_id int [pk]
+  consanguineous_stat varchar (10)
+  region varchar (255)
+}
+
+Ref: families.family_id < patients.family_id
+
+ 

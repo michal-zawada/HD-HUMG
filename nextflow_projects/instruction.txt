@@ -1,0 +1,9 @@
+pipeline_v0.1 is not used.
+pipeline_v0.2 can be used for single WES without CNV. As input file use csv file in samples_to_nf\current_run\samplesToRun...
+pipeline_v0.3 can be used for trio WES without CNV. The main.nf file is not finished. As input file use csv file in samples_to_nf\current_run_test\samplesToRun...
+pipeline_v0.4 can be used for single WGS without CNV. As input file use csv file in samples_to_nf\current_run_WGS_test\samplesToRun...
+
+In most of the nextplow pipelines csv file with samples is required as input. There are paths to fastq files. It was designed to our ExomeServer, so the paths needs to be changed if it is running in different location. The csv file is generated with seq_run_upload_auto.py script. seq_run_upload_auto.py script, in order to work, needs to have adjusted file paths and created sql database. It needs 201119_ST-K00265_0352_BHK7VNBBXY_meta.tsv file from 201119_ST-K00265_0352_BHK7VNBBXY sequencing run (or another example of sequencing run).
+
+In csv files samples_to_nf\current_run\samplesToRun... are file paths to fastq files from sequencing run. 
+
